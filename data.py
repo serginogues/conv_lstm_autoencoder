@@ -1,8 +1,8 @@
 from os import listdir
 from os.path import isfile, join, isdir
 import numpy as np
-from PIL import Image
 from tqdm import tqdm
+import PIL.Image
 
 
 def get_clips_by_stride(stride, frames_list, sequence_size):
@@ -36,7 +36,7 @@ def get_clips_by_stride(stride, frames_list, sequence_size):
     return clips
 
 
-def get_train_ucsd(dataset_path: str = 'data/UCSDped1/Train'):
+def get_train_ucsd(dataset_path: str = 'UCSDped1/Train'):
     """
     Returns
     -------
@@ -45,7 +45,7 @@ def get_train_ucsd(dataset_path: str = 'data/UCSDped1/Train'):
     """
     clips = []
     # loop over the training folders (Train000,Train001,..)
-    for f in tqdm(sorted(listdir(dataset_path)), desc="Loading UCSDped1"):
+    for f in tqdm(sorted(listdir(dataset_path)), desc="Loading Dataset"):
         directory_path = join(dataset_path, f)
         if isdir(directory_path):
             all_frames = []
@@ -53,10 +53,28 @@ def get_train_ucsd(dataset_path: str = 'data/UCSDped1/Train'):
             for c in sorted(listdir(directory_path)):
                 img_path = join(directory_path, c)
                 if str(img_path)[-3:] == "tif":
-                    img = Image.open(img_path).resize((256, 256))
+                    img = PIL.Image.open(img_path).resize((256, 256))
                     img = np.array(img, dtype=np.float32) / 256.0
                     all_frames.append(img)
             # get the 10-frames sequences from the list of images after applying data augmentation
             for stride in range(1, 3):
                 clips.extend(get_clips_by_stride(stride=stride, frames_list=all_frames, sequence_size=10))
     return clips
+
+
+def get_single_test(TEST_PATH: str = 'UCSDped1/Test/Test032'):
+    """
+    Returns single 200 frame testing video specified by TEST_PATH. \n
+    UCSD dataset provides 34 testing videos. \n
+    :returns: (200 x 256 x 256 x 1) numpy array
+    """
+    sz = 200
+    test = np.zeros(shape=(sz, 256, 256, 1))
+    idx = 0
+    for f in sorted(listdir(TEST_PATH)):
+        if str(join(TEST_PATH, f))[-3:] == "tif":
+            img = PIL.Image.open(join(TEST_PATH, f)).resize((256, 256))
+            img = np.array(img, dtype=np.float32) / 256.0
+            test[idx, :, :, 0] = img
+            idx = idx + 1
+    return test
