@@ -41,90 +41,199 @@ About keras.layers.TimeDistributed:
     Because TimeDistributed applies the same instance of Conv2D to each of the timestamps,
     the same set of weights are used at each timestamp.
 """
+from config import *
+import argparse
 import matplotlib.pyplot as plt
+import cv2
 from keras.layers import Conv2DTranspose, ConvLSTM2D, TimeDistributed, Conv2D, LayerNormalization
 from keras.models import Sequential, load_model
 from data import *
 import tensorflow as tf
-
-SAVE_PATH = 'backup/model.hdf5'
-DATASET_PATH = 'data/UCSDped1'
-BATCH_SIZE = 4  # number of training samples per learning iteration
-EPOCHS = 3  # number of times the full dataset is seen during training
+import time
 
 
-def mainscript(TEST=False):
+def train(path):
     """
+    Train conv-lstm autoencoder
+
     Parameters
     ----------
-    TEST : bool
-        Load and test saved model or retrain it
+    path
+        path to training dataset
+
+    Returns
+    -------
+    weights
+        saves model at backup/model.hdf5
     """
-    if TEST:
-        model = load_model(SAVE_PATH, custom_objects={'LayerNormalization': LayerNormalization})
-        test = get_single_test()
-        sz = test.shape[0] - 10
-        sequences = np.zeros((sz, 10, 256, 256, 1))
+    # get taining data
+    training_set = get_train_dataset(dataset_path=path)
 
-        for i in range(0, sz):
-            clip = np.zeros((10, 256, 256, 1))
-            for j in range(0, 10):
-                clip[j] = test[i + j, :, :, :]
-            sequences[i] = clip
+    # training set is an array of clips with shape (# img, 10, 256, 256, 1)
+    training_set = np.array(training_set)
 
-        # get the reconstruction cost of all the sequences
-        reconstructed_sequences = model.predict(sequences, batch_size=4)
-        sequences_reconstruction_cost = np.array(
-            [np.linalg.norm(np.subtract(sequences[i], reconstructed_sequences[i])) for i in range(0, sz)])
-        sa = (sequences_reconstruction_cost - np.min(sequences_reconstruction_cost)) / np.max(sequences_reconstruction_cost)
-        sr = 1.0 - sa
+    seq = Sequential()
 
-        # plot the regularity scores
-        plt.plot(sr)
-        plt.ylabel('regularity score Sr(t)')
-        plt.xlabel('frame t')
-        plt.show()
+    # Spatial encoder
+    seq.add(TimeDistributed(Conv2D(128, (11, 11), strides=4, padding="same"), batch_input_shape=(None, BATCH_INPUT_SHAPE, 256, 256, 1)))
+    seq.add(LayerNormalization())
+    seq.add(TimeDistributed(Conv2D(64, (5, 5), strides=2, padding="same")))
+    seq.add(LayerNormalization())
 
-    else:
-        # get taining data
-        training_set = get_train_ucsd(dataset_path=TEST_PATH)
-        training_set = np.array(training_set)
+    # Temporal encoder
+    seq.add(ConvLSTM2D(64, (3, 3), padding="same", return_sequences=True))
+    seq.add(LayerNormalization())
+    seq.add(ConvLSTM2D(32, (3, 3), padding="same", return_sequences=True))
+    seq.add(LayerNormalization())
 
-        seq = Sequential()
+    # Temporal decoder
+    seq.add(ConvLSTM2D(64, (3, 3), padding="same", return_sequences=True))
+    seq.add(LayerNormalization())
 
-        # Spatial encoder
-        seq.add(TimeDistributed(Conv2D(128, (11, 11), strides=4, padding="same"), batch_input_shape=(None, 10, 256, 256, 1)))
-        seq.add(LayerNormalization())
-        seq.add(TimeDistributed(Conv2D(64, (5, 5), strides=2, padding="same")))
-        seq.add(LayerNormalization())
+    # Spatial decoder
+    seq.add(TimeDistributed(Conv2DTranspose(64, (5, 5), strides=2, padding="same")))
+    seq.add(LayerNormalization())
+    seq.add(TimeDistributed(Conv2DTranspose(128, (11, 11), strides=4, padding="same")))
+    seq.add(LayerNormalization())
+    seq.add(TimeDistributed(Conv2D(1, (11, 11), activation="sigmoid", padding="same")))
 
-        # Temporal encoder
-        seq.add(ConvLSTM2D(64, (3, 3), padding="same", return_sequences=True))
-        seq.add(LayerNormalization())
-        seq.add(ConvLSTM2D(32, (3, 3), padding="same", return_sequences=True))
-        seq.add(LayerNormalization())
+    print(seq.summary())
 
-        # Temporal decoder
-        seq.add(ConvLSTM2D(64, (3, 3), padding="same", return_sequences=True))
-        seq.add(LayerNormalization())
+    # compile model architecture
+    seq.compile(loss='mse', optimizer=tf.keras.optimizers.Adam(lr=1e-4, decay=1e-5, epsilon=1e-6))
 
-        # Spatial decoder
-        seq.add(TimeDistributed(Conv2DTranspose(64, (5, 5), strides=2, padding="same")))
-        seq.add(LayerNormalization())
-        seq.add(TimeDistributed(Conv2DTranspose(128, (11, 11), strides=4, padding="same")))
-        seq.add(LayerNormalization())
-        seq.add(TimeDistributed(Conv2D(1, (11, 11), activation="sigmoid", padding="same")))
+    # train our model
+    print("Training starts")
+    seq.fit(training_set, training_set, batch_size=BATCH_SIZE, epochs=EPOCHS, shuffle=False, verbose=1)
+    seq.save(SAVE_PATH)
 
-        print(seq.summary())
+    return seq
 
-        # compile model architecture
-        seq.compile(loss='mse', optimizer=tf.keras.optimizers.Adam(lr=1e-4, decay=1e-5, epsilon=1e-6))
 
-        # train our model
-        print("Training starts")
-        seq.fit(training_set, training_set, batch_size=BATCH_SIZE, epochs=EPOCHS, shuffle=False, verbose=1)
-        seq.save(SAVE_PATH)
+def evaluate_frame_sequence(path: str = 'UCSDped1/Test/Test032'):
+    """
+    Evaluate single video already stored as frame sequence
+    """
+    model = load_model(SAVE_PATH, custom_objects={'LayerNormalization': LayerNormalization})
+    test = get_single_test(path=path)
+    sz = test.shape[0] - BATCH_INPUT_SHAPE
+    sequences = np.zeros((sz, BATCH_INPUT_SHAPE, 256, 256, 1))
+
+    for i in range(0, sz):
+        clip = np.zeros((BATCH_INPUT_SHAPE, 256, 256, 1))
+        for j in range(0, BATCH_INPUT_SHAPE):
+            clip[j] = test[i + j, :, :, :]
+        sequences[i] = clip
+
+    # get the reconstruction cost of all the sequences
+    reconstructed_sequences = model.predict(sequences, batch_size=4)
+    sequences_reconstruction_cost = np.array(
+        [np.linalg.norm(np.subtract(sequences[i], reconstructed_sequences[i])) for i in range(0, sz)])
+    sa = (sequences_reconstruction_cost - np.min(sequences_reconstruction_cost)) / np.max(sequences_reconstruction_cost)
+    sr = 1.0 - sa
+
+    # plot the regularity scores
+    plt.plot(sr)
+    plt.ylabel('regularity score Sr(t)')
+    plt.xlabel('frame t')
+    plt.show()
+
+
+def evaluate_video(config):
+    """
+    Evaluate video
+    """
+    #TODO: to be finished
+
+    SAVE = config.save
+    VIDEO_PATH = config.input
+
+    # begin video capture
+    # if the input is the camera, pass 0 instead of the video path
+    try:
+        vid = cv2.VideoCapture(VIDEO_PATH)
+    except:
+        vid = cv2.VideoCapture(VIDEO_PATH)
+
+    # get video ready to save locally if flag is set
+    out = None
+    frame_width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    if SAVE:
+        # by default VideoCapture returns float instead of int
+        fps = int(vid.get(cv2.CAP_PROP_FPS))
+        codec = cv2.VideoWriter_fourcc(*"mp4")  # 'XVID'
+        out = cv2.VideoWriter("output", codec, fps, (frame_width, frame_height))
+
+    # init display params
+    start = time.time()
+    counter = 0
+
+    # init video_clip for slowfast
+    video_clip = []
+
+    # read frame by frame until video is completed
+    while vid.isOpened():
+
+        ret, frame = vid.read()  # capture frame-by-frame
+        if ret:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            video_clip.append(frame)
+        else:
+            print('Video has ended or failed')
+            break
+
+        start_time = time.time()
+        counter += 1
+        print("Frame #", counter)
+
+        # Display
+        # checking video frame rate
+        fps = 1.0 / (time.time() - start_time)
+        print("FPS: %.2f" % fps)
+
+        # Writing FrameRate on video
+        cv2.putText(frame, str(int(fps)) + " fps", (50, 70), cv2.FONT_ITALIC, 1, (0, 255, 0), 2)
+
+        # convert back to BGR
+        result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
+        # if flag save video, else display
+        if SAVE:
+            out.write(result)
+        else:
+            # show frame
+            cv2.imshow("Output Video", result)
+
+            # Press Q on keyboard to exit
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+    # Closes all the frames
+    cv2.destroyAllWindows()
+
+    # Average fps
+    end = time.time()
+    seconds = end - start
+    print("Time taken: {0} seconds".format(seconds))
+    print("Number of frames: {0}".format(counter))
+    fps = counter / seconds
+    print("Estimated frames per second: {0}".format(fps))
+
+    # When everything done, release the video capture object
+    vid.release()
 
 
 if __name__ == '__main__':
-    mainscript(TEST=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--train', type=bool, default=True,
+                        help='Test saved model or retrain it')
+    parser.add_argument('--path', type=str, default='UCSDped1/Train',
+                        help='path to dataset or test video')
+    config = parser.parse_args()
+
+    path = config.path
+    if config.train:
+        train(path)
+    else:
+        evaluate_frame_sequence()
