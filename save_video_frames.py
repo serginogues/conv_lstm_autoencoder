@@ -1,13 +1,20 @@
 import argparse
+from os import listdir
+from os.path import join, isfile
 from pathlib import Path
 import cv2
+from tqdm import tqdm
 
 
-def save_video_frames(config):
+def save_video_frames(path: str):
     """
     Save video frames
+
+    Parameters
+    ----------
+    path
+        path to video
     """
-    path = config.path
     per_200_frames = config.per_200_frames
 
     # get path without '.mp4'
@@ -62,11 +69,28 @@ def save_video_frames(config):
             count += 1
 
 
+def main(config):
+    """
+    Creates one folder per video, each folder containing the video frames
+
+    Parameters
+    ----------
+    path
+        path to folder with one or many videos
+    """
+    path = config.path
+    for f in tqdm(sorted(listdir(path)), desc="Creating training folders"):
+        video_path = join(path, f)
+        if isfile(video_path) and video_path.split(".")[-1] == "mp4":
+            save_video_frames(video_path)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--per_200_frames', type=bool, default=False,
                         help='if true saves video in subfolders of 200 frames each')
     parser.add_argument('--path', type=str, default='UCSDped1/Train',
-                        help='path to dataset or test video')
+                        help='path to folder with one or many videos. Creates one folder per video.')
     config = parser.parse_args()
-    save_video_frames(config)
+    main(config)
+
