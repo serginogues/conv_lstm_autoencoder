@@ -6,7 +6,7 @@ import cv2
 from tqdm import tqdm
 
 
-def save_video_frames(path: str):
+def video2frames(path: str):
     """
     Save video frames
 
@@ -38,34 +38,6 @@ def save_video_frames(path: str):
         success, image = vidcap.read()
         count += 1
 
-    """if per_200_frames:
-        # create subfolders
-        folder_idx = [x for x in range(0, int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)), 200)]
-        for x in folder_idx:
-            Path(name + "/train_" + str(x)).mkdir(parents=True, exist_ok=True)
-
-        # start reading frames
-        success, image = vidcap.read()
-        count = 0
-        folder_count = 0
-        while success:
-
-            # new folder every 200 frames
-            if count > 199:
-                count = 0
-                folder_count += 1
-                print(str(folder_count) + " out of " + str(len(folder_idx)))
-
-            print(count)
-            # save in grayscale 0-255
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            new_path = name + "/train_" + str(folder_idx[folder_count]) + "/frame" + str(count) + ".jpg"
-            cv2.imwrite(new_path, gray)
-
-            # next frame
-            success, image = vidcap.read()
-            count += 1"""
-
 
 def main(config):
     """
@@ -80,7 +52,7 @@ def main(config):
     for f in tqdm(sorted(listdir(path)), desc="Saving frames for each video"):
         video_path = join(path, f)
         if isfile(video_path) and video_path.split(".")[-1] == "mp4":
-            save_video_frames(video_path)
+            video2frames(video_path)
 
 
 if __name__ == '__main__':

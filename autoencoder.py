@@ -143,10 +143,8 @@ def evaluate_video(config):
     """
     Evaluate video
     """
-    #TODO: to be finished
-
-    SAVE = config.save
-    VIDEO_PATH = config.input
+    SAVE = False
+    VIDEO_PATH = config.path
 
     # begin video capture
     # if the input is the camera, pass 0 instead of the video path
@@ -177,7 +175,7 @@ def evaluate_video(config):
 
         ret, frame = vid.read()  # capture frame-by-frame
         if ret:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             video_clip.append(frame)
         else:
             print('Video has ended or failed')
@@ -226,7 +224,7 @@ def evaluate_video(config):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train', type=bool, default=True,
+    parser.add_argument('--train', type=bool, default=False,
                         help='Test saved model or retrain it')
     parser.add_argument('--path', type=str, default='UCSDped1/Train',
                         help='path to dataset or test video')
@@ -236,4 +234,4 @@ if __name__ == '__main__':
     if config.train:
         train(path)
     else:
-        evaluate_frame_sequence()
+        evaluate_video(config)
