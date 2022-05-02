@@ -64,17 +64,14 @@ def get_train_dataset(dataset_path: str = 'UCSDped1/Train'):
 
 def get_single_test(path: str = 'UCSDped1/Test/Test032'):
     """
-    Returns single 200 frame testing video specified by TEST_PATH
-
     Parameters
     ----------
     path
-        UCSD dataset provides 34 testing videos
-
+        Path to single test folder containing video frames (images)
     Returns
     -------
     np.ndarray
-        (200 x 256 x 256 x 1) numpy array
+        (#images x 256 x 256 x 1) numpy array
     """
     sz = int(len([name for name in os.listdir(path) if isfile(join(path, name)) and name.split(".")[-1] in FORMATS_list]))
     test = np.zeros(shape=(sz, 256, 256, 1))
