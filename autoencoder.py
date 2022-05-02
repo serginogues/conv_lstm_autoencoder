@@ -45,9 +45,10 @@ from config import *
 import argparse
 import matplotlib.pyplot as plt
 import cv2
+import numpy as np
 from keras.layers import Conv2DTranspose, ConvLSTM2D, TimeDistributed, Conv2D, LayerNormalization
 from keras.models import Sequential, load_model
-from data import *
+from dataset_utils import get_train_dataset, get_single_test
 import tensorflow as tf
 import time
 
@@ -98,6 +99,7 @@ def train(path):
     seq.add(TimeDistributed(Conv2D(1, (11, 11), activation="sigmoid", padding="same")))
 
     print(seq.summary())
+    print("############# Training set shape: " + str(training_set.shape))
 
     # compile model architecture
     seq.compile(loss='mse', optimizer=tf.keras.optimizers.Adam(lr=1e-4, decay=1e-5, epsilon=1e-6))

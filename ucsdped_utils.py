@@ -9,8 +9,6 @@ import PIL.Image
 
 def get_clips_by_stride(frames_list: list, stride: int = 1):
     """
-    Create list of 10-frames sequences.
-
     Parameters
     ----------
     stride : int
@@ -19,8 +17,6 @@ def get_clips_by_stride(frames_list: list, stride: int = 1):
         Example (1, 3, 5, 7, 9, 11, 13, 15, 17, 19).
     frames_list : list
         A list of frames of shape 256 X 256. It should be a video sequence.
-    clip_size: int
-        The size of the lstm input sequence
     Returns
     -------
     list
@@ -39,7 +35,7 @@ def get_clips_by_stride(frames_list: list, stride: int = 1):
     return clips
 
 
-def get_train_dataset(dataset_path: str = 'UCSDped1/Train', data_augmentation: bool = False):
+def get_train_dataset(dataset_path: str = 'UCSDped1/Train'):
     """
     Parameters
     ----------
@@ -54,7 +50,6 @@ def get_train_dataset(dataset_path: str = 'UCSDped1/Train', data_augmentation: b
         A list of clips , 10 frames each (10 x 256 x 256 x 1)
     """
     clips = []
-    range_ = range(1, 3) if data_augmentation else range(2, 3)
 
     # loop over the training folders (video1, video2, ..)
     for f in sorted(listdir(dataset_path)):
@@ -70,7 +65,7 @@ def get_train_dataset(dataset_path: str = 'UCSDped1/Train', data_augmentation: b
                     img = np.array(img, dtype=np.float32) / 256.0
                     all_frames.append(img)
             # get the 10-frames sequences from the list of images after applying data augmentation
-            for stride in range_:
+            for stride in range(1, 3):
                 clips.extend(get_clips_by_stride(frames_list=all_frames, stride=stride))
     return clips
 

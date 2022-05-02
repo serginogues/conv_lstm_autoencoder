@@ -29,12 +29,13 @@ def video2frames(path: str):
     success, image = vidcap.read()
     count = 0
     while success:
-        # save in grayscale 0-255
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        new_path = name + "/frame" + str(count) + ".jpg"
-        cv2.imwrite(new_path, gray)
+        if count % 2 == 0:
+            # save in grayscale 0-255
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            new_path = name + "/frame" + str(count) + ".jpg"
+            cv2.imwrite(new_path, gray)
 
-        # next frame
+        # next framedataset utils
         success, image = vidcap.read()
         count += 1
 
