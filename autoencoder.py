@@ -43,12 +43,12 @@ About keras.layers.TimeDistributed:
 """
 from config import *
 import argparse
-import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 from keras.layers import Conv2DTranspose, ConvLSTM2D, TimeDistributed, Conv2D, LayerNormalization
 from keras.models import Sequential, load_model
-from dataset_utils import get_train_dataset, get_single_test
+from dataset_utils import get_train_dataset
+from ucsdped_utils import evaluate_frame_sequence
 import tensorflow as tf
 import time
 
@@ -112,36 +112,27 @@ def train(path):
     return seq
 
 
-def evaluate_frame_sequence(path: str = 'UCSDped1/Test/Test032'):
+def evaluate_clip(clip: list, model):
     """
-    Evaluate single video already stored as frame sequence
+    Run reconstruction on single clip and evaluate error.
+
+    Parameters
+    ----------
+    clip
+        list of (255, 255, 1) frames, where len(frame_list) = BATCH_INPUT_SHAPE
+    model
+        backup/model.hdf5
     """
-    model = load_model(SAVE_PATH, custom_objects={'LayerNormalization': LayerNormalization})
-    test = get_single_test(path=path)
-    sz = test.shape[0] - BATCH_INPUT_SHAPE
-    sequences = np.zeros((sz, BATCH_INPUT_SHAPE, 256, 256, 1))
+    sequences = np.zeros((1, BATCH_INPUT_SHAPE, 256, 256, 1))
+    for i in range(BATCH_INPUT_SHAPE):
+        sequences[0, i, :, :, :] = clip[i]
 
-    for i in range(0, sz):
-        clip = np.zeros((BATCH_INPUT_SHAPE, 256, 256, 1))
-        for j in range(0, BATCH_INPUT_SHAPE):
-            clip[j] = test[i + j, :, :, :]
-        sequences[i] = clip
-
-    # get the reconstruction cost of all the sequences
     reconstructed_sequences = model.predict(sequences, batch_size=4)
-    sequences_reconstruction_cost = np.array(
-        [np.linalg.norm(np.subtract(sequences[i], reconstructed_sequences[i])) for i in range(0, sz)])
-    sa = (sequences_reconstruction_cost - np.min(sequences_reconstruction_cost)) / np.max(sequences_reconstruction_cost)
-    sr = 1.0 - sa
-
-    # plot the regularity scores
-    plt.plot(sr)
-    plt.ylabel('regularity score Sr(t)')
-    plt.xlabel('frame t')
-    plt.show()
+    sequences_reconstruction_cost = np.linalg.norm(np.subtract(sequences[0], reconstructed_sequences[0]))
+    return sequences_reconstruction_cost
 
 
-def evaluate_video(config):
+def run_video(config):
     """
     Evaluate video
     """
@@ -236,4 +227,5 @@ if __name__ == '__main__':
     if config.train:
         train(path)
     else:
-        evaluate_video(config)
+        #run_video(config)
+        evaluate_frame_sequence()
