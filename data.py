@@ -57,12 +57,12 @@ def get_train_dataset(dataset_path: str = 'UCSDped1/Train', data_augmentation: b
     range_ = range(1, 3) if data_augmentation else range(2, 3)
 
     # loop over the training folders (video1, video2, ..)
-    for f in tqdm(sorted(listdir(dataset_path)), desc="Loading training folders"):
+    for f in sorted(listdir(dataset_path)):
         directory_path = join(dataset_path, f)
         if isdir(directory_path):
             all_frames = []
             # loop over all files in the folder
-            for c in sorted(listdir(directory_path)):
+            for c in tqdm(sorted(listdir(directory_path)), desc="Loading " + str(f)):
                 img_path = join(directory_path, c)
                 # append if it is an image with FORMAT
                 if img_path.split(".")[-1] in FORMATS_list:
