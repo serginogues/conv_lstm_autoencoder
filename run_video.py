@@ -48,6 +48,7 @@ def run_video(path: str):
     # init video_clip for slowfast
     clip = []
     cost_history = []
+    current_cost = 0
 
     # read frame by frame until video is completed
     while vid.isOpened():
@@ -66,21 +67,20 @@ def run_video(path: str):
 
         # Writing FrameRate on video
         cv2.putText(frame, "# frame: " + str(counter), (50, 70), cv2.FONT_ITALIC, 1, (0, 255, 0), 2)
-
-        # convert back to BGR
-        gray_img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
         if counter % 2 == 0:
 
+            # convert back to BGR
+            gray_img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray_img = cv2.resize(gray_img, (256, 256)) / 256.0
+            gray_img = np.reshape(gray_img, (256, 256, 1))
             clip.append(gray_img)
-
             if len(clip) == 10:
+                cost = evaluate_clip(clip, model)
+                cost_history.append(cost)
+                current_cost = cost
                 clip.pop(0)
 
-            cost = evaluate_clip(clip, model)
-            cost_history.append(cost)
-
-            cv2.putText(frame, "Cost: " + str(cost), (50, 70), cv2.FONT_ITALIC, 1, (0, 255, 0), 2)
+        cv2.putText(frame, "Cost: " + str(np.round(current_cost, 2)), (50, 100), cv2.FONT_ITALIC, 1, (0, 255, 0), 2)
 
         # show frame
         cv2.imshow("Output Video", frame)
@@ -105,7 +105,8 @@ def run_video(path: str):
 
 
 def main(config):
-    run_video(config.path)
+    path = config.path
+    run_video(path)
 
 
 if __name__ == '__main__':

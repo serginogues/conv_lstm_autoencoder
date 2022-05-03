@@ -13,8 +13,9 @@ def evaluate_frame_sequence(path: str):
     """
     Evaluate single video already stored as frame sequence
     """
-
+    print(SAVE_PATH)
     model = load_model(SAVE_PATH, custom_objects={'LayerNormalization': LayerNormalization})
+    print("Model used: " + SAVE_PATH)
     test = get_single_test(path=path)
 
     sz = test.shape[0] - BATCH_INPUT_SHAPE
@@ -29,7 +30,7 @@ def evaluate_frame_sequence(path: str):
 
     # get the reconstruction cost of all the sequences
     print("Evaluation starts")
-    reconstructed_sequences = model.predict(sequences, batch_size=1, verbose=1)
+    reconstructed_sequences = model.predict(sequences, batch_size=4, verbose=1)
     sequences_reconstruction_cost = np.array(
         [np.linalg.norm(np.subtract(sequences[i], reconstructed_sequences[i])) for i in range(0, sz)])
     sa = (sequences_reconstruction_cost - np.min(sequences_reconstruction_cost)) / np.max(sequences_reconstruction_cost)
