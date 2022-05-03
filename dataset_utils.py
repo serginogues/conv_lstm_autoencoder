@@ -76,7 +76,7 @@ def get_single_test(path: str = 'UCSDped1/Test/Test032'):
     sz = int(len([name for name in os.listdir(path) if isfile(join(path, name)) and name.split(".")[-1] in FORMATS_list]))
     test = np.zeros(shape=(sz, 256, 256, 1))
     idx = 0
-    for f in sorted(listdir(path)):
+    for f in tqdm(sorted(listdir(path)), desc="Get single test"):
         file_path = join(path, f)
         if file_path.split(".")[-1] in FORMATS_list:  # "tif"
             img = PIL.Image.open(file_path).resize((256, 256))

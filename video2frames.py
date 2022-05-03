@@ -39,6 +39,8 @@ def video2frames(path: str):
         success, image = vidcap.read()
         count += 1
 
+    return name
+
 
 def main(config):
     """
