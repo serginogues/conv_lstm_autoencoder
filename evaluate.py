@@ -21,7 +21,7 @@ def evaluate_frame_sequence(path: str):
     sz = test.shape[0] - BATCH_INPUT_SHAPE
     sequences = np.zeros((sz, BATCH_INPUT_SHAPE, 256, 256, 1))
 
-    for i in tqdm(range(0, sz), desc="Evaluating"):
+    for i in tqdm(range(0, sz), desc="Creating clips"):
         clip = np.zeros((BATCH_INPUT_SHAPE, 256, 256, 1))
         for j in range(0, BATCH_INPUT_SHAPE):
             clip[j] = test[i + j, :, :, :]
@@ -29,7 +29,6 @@ def evaluate_frame_sequence(path: str):
         sequences[i] = clip
 
     # get the reconstruction cost of all the sequences
-    print("Evaluation starts")
     reconstructed_sequences = model.predict(sequences, batch_size=1 , verbose=1)
     sequences_reconstruction_cost = np.array(
         [np.linalg.norm(np.subtract(sequences[i], reconstructed_sequences[i])) for i in range(0, sz)])
@@ -38,8 +37,8 @@ def evaluate_frame_sequence(path: str):
 
     # plot the regularity scores
     plt.plot(sequences_reconstruction_cost)
-    plt.ylabel('regularity score Sr(t)')
-    plt.xlabel('frame t')
+    plt.ylabel('Reconstruction Cost')
+    plt.xlabel('Frame')
     plt.show()
 
 

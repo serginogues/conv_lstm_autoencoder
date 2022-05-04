@@ -1,11 +1,5 @@
 """
-LSTM Convolutional Autoencoder for Anomaly Detection in Videos
-UCSD Anomaly Detection Dataset: http://www.svcl.ucsd.edu/projects/anomaly/dataset.htm
-https://towardsdatascience.com/prototyping-an-anomaly-detection-system-for-videos-step-by-step-using-lstm-convolutional-4e06b7dcdd29
-
----------------------------------------------------------------------
-Spatio-Temporal Autoencoder with LSTM and Convolutional layers
-Encoder made of two parts: spatial encoder and temporal encoder.
+Spatio-Temporal Autoencoder with LSTM and Convolutional layers.
 
 Architecture:
 - Input: (10 x 256 x 256 x 1) 10 grayscale images that form a sequence/clip
