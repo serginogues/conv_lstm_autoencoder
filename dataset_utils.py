@@ -30,7 +30,7 @@ def get_clips_by_stride(frames_list: list):
     return clips
 
 
-def get_train_dataset(dataset_path: str = 'UCSDped1/Train'):
+def get_train_dataset(dataset_path: str):
     """
     Parameters
     ----------
@@ -62,7 +62,7 @@ def get_train_dataset(dataset_path: str = 'UCSDped1/Train'):
     return clips
 
 
-def get_single_test(path: str = 'UCSDped1/Test/Test032'):
+def get_single_test(path: str):
     """
     Parameters
     ----------

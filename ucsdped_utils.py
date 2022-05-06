@@ -34,7 +34,7 @@ def get_clips_by_stride(frames_list: list, stride: int = 1):
     return clips
 
 
-def get_train_dataset(dataset_path: str = 'UCSDped1/Train'):
+def get_train_dataset(dataset_path: str):
     """
     Parameters
     ----------

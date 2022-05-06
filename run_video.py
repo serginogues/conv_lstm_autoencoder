@@ -73,7 +73,7 @@ def run_video(path: str):
         if counter % 2 == 0:
             # convert back to BGR
             clip.append(frame)
-            if len(clip) == 10:
+            if len(clip) == BATCH_INPUT_SHAPE:
                 cost = evaluate_clip(clip, model)
                 cost_history.append(cost)
                 current_cost = cost

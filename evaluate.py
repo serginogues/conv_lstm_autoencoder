@@ -29,7 +29,7 @@ def evaluate_frame_sequence(path: str):
         sequences[i] = clip
 
     # get the reconstruction cost of all the sequences
-    reconstructed_sequences = model.predict(sequences, batch_size=1 , verbose=1)
+    reconstructed_sequences = model.predict(sequences, batch_size=BATCH_SIZE, verbose=1)
     sequences_reconstruction_cost = np.array(
         [np.linalg.norm(np.subtract(sequences[i], reconstructed_sequences[i])) for i in range(0, sz)])
     """sa = (sequences_reconstruction_cost - np.min(sequences_reconstruction_cost)) / np.max(sequences_reconstruction_cost)
@@ -37,8 +37,8 @@ def evaluate_frame_sequence(path: str):
 
     # plot the regularity scores
     plt.plot(sequences_reconstruction_cost)
-    plt.ylabel('Reconstruction Cost')
-    plt.xlabel('Frame')
+    plt.ylabel('Reconstruction cost')
+    plt.xlabel('frame')
     plt.show()
 
 
