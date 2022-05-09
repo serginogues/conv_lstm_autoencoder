@@ -36,8 +36,6 @@ def get_train_dataset(dataset_path: str):
     ----------
     dataset_path
         path to dataset
-    data_augmentation
-        if True does data augmentation to create more clip sequences
 
     Returns
     -------
