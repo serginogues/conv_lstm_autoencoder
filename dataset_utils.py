@@ -19,7 +19,7 @@ def create_UCSDPed1():
         numpy array of shape (# clips, BATCH_INPUT_LENGTH, IMAGE_SIZE, IMAGE_SIZE, 1)
     """
     dataset = []
-    ucsd_train_path = 'data/UCSDped1/Train'
+    ucsd_train_path = 'C:/Users/azken/Documents/Datasets/Anomaly Detection/UCSDped1/Train'
     # loop over the training folders (video1, video2, ..)
     for f in sorted(listdir(ucsd_train_path)):
         directory_path = join(ucsd_train_path, f)
@@ -58,7 +58,7 @@ def test_UCSDPed1(model_path: str):
         path to .h5 file
     """
 
-    path = 'data/UCSDped1/Test'
+    path = 'C:/Users/azken/Documents/Datasets/Anomaly Detection/UCSDped1/Test'
     model = load_model(model_path, custom_objects={'LayerNormalization': LayerNormalization})
 
     for vid in listdir(path):
@@ -67,10 +67,10 @@ def test_UCSDPed1(model_path: str):
 
             test = get_single_test_UCSDPed1(vid_path)
             sz = test.shape[0] - BATCH_INPUT_LENGTH
-            sequences = np.zeros((sz, BATCH_INPUT_LENGTH, 256, 256, 1))
+            sequences = np.zeros((sz, BATCH_INPUT_LENGTH, IMAGE_SIZE, IMAGE_SIZE, 1))
 
             for i in tqdm(range(0, sz), desc="Creating clips"):
-                clip = np.zeros((BATCH_INPUT_LENGTH, 256, 256, 1))
+                clip = np.zeros((BATCH_INPUT_LENGTH, IMAGE_SIZE, IMAGE_SIZE, 1))
                 for j in range(0, BATCH_INPUT_LENGTH):
                     clip[j] = test[i + j, :, :, :]
                     # reconstructed_sequence = model.predict(sequences, batch_size=1, verbose=1)
@@ -89,7 +89,8 @@ def test_UCSDPed1(model_path: str):
             sr = 1.0 - sa
 
             # plot the regularity scores
-            plt.plot(sr)
+            plt.plot(sr, label=vid)
+            plt.legend()
             plt.ylabel('Regularity Score')
             plt.xlabel('Frame')
             plt.show()
@@ -107,11 +108,14 @@ def get_single_test_UCSDPed1(path: str):
         (#images x 256 x 256 x 1) numpy array
     """
     frame_path_list = [join(path, name) for name in listdir(path) if isfile(join(path, name)) and name.split(".")[-1] in IMAGE_EXTENSION_LIST]
-    test = np.zeros(shape=(int(len(frame_path_list)), 256, 256, 1))
+    test = np.zeros(shape=(int(len(frame_path_list)), IMAGE_SIZE, IMAGE_SIZE, 1))
     idx = 0
     for img_path in frame_path_list:
-        img = PIL.Image.open(img_path).resize((256, 256))
+        img = PIL.Image.open(img_path).resize((IMAGE_SIZE, IMAGE_SIZE))
         img = np.array(img, dtype=np.float32) / 256.0
         test[idx, :, :, 0] = img
         idx = idx + 1
     return test
+
+
+test_UCSDPed1('backup/UCSDPed_0.0016_1958209_15_10_64.hdf5')

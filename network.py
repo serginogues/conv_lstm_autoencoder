@@ -41,7 +41,7 @@ def create_ConvLSTMAutoencoder():
 
     # Spatial encoder
     seq.add(TimeDistributed(Conv2D(128, (11, 11), strides=4, padding="same"),
-                            input_shape=(BATCH_INPUT_LENGTH, 256, 256, 1)))
+                            input_shape=(BATCH_INPUT_LENGTH, IMAGE_SIZE, IMAGE_SIZE, 1)))
     seq.add(LayerNormalization())
     seq.add(TimeDistributed(Conv2D(64, (5, 5), strides=2, padding="same")))
     seq.add(LayerNormalization())

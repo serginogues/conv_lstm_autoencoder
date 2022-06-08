@@ -24,7 +24,7 @@ def plot_history(train_history, metric_1: str, metric_2: str):
     plt.show()
 
 
-def train(display: bool = True):
+def train(evaluate: bool = True):
     """
     Train conv-lstm autoencoder
 
@@ -53,13 +53,11 @@ def train(display: bool = True):
 
     # train our model
     print("Training starts")
-    train_hist = model.fit(training_set, training_set, batch_size=BATCH_SIZE, epochs=EPOCHS, shuffle=True, verbose=1)
+    train_hist = model.fit(x=training_set, y=training_set, batch_size=BATCH_SIZE, epochs=EPOCHS, shuffle=True, verbose=1)
 
     LOGS = [str(TRAIN_DATASET).split(".")[1],
             str(np.round(train_hist.history['loss'][-1], 4)),
-            str(np.round(train_hist.history['accuracy'][-1], 4)),
             str(count_params(model.trainable_weights)),
-            str(len(train_hist.history['loss'])),
             str(BATCH_SIZE),
             str(BATCH_INPUT_LENGTH),
             str(IMAGE_SIZE)]
@@ -67,14 +65,12 @@ def train(display: bool = True):
     model_name = '_'.join([str(x) for x in LOGS]) + '.hdf5'
     model_path = 'backup/' + model_name
     model.save(model_path)
-    print(model_name)
-
-    if display:
-        plot_history(train_history=train_hist, metric_1='loss', metric_2='accuracy')
+    print(model_path)
 
     # EVALUATE
-    if TRAIN_DATASET == eDatasets.UCSDPed:
-        test_UCSDPed1(model_path=model_path)
+    if evaluate:
+        if TRAIN_DATASET == eDatasets.UCSDPed:
+            test_UCSDPed1(model_path=model_path)
 
 
 if __name__ == '__main__':

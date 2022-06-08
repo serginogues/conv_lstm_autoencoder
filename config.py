@@ -3,11 +3,11 @@ from enum import Enum
 BATCH_INPUT_LENGTH = 10
 IMAGE_SIZE = 64  # 256
 
-BATCH_SIZE = 4  # number of training samples per learning iteration
+BATCH_SIZE = 15  # number of training samples per learning iteration
 EPOCHS = 100  # number of times the full dataset is seen during training
 
 TEMPORAL_STRIDE = 8
-DATA_AUGMENTATION = True
+DATA_AUGMENTATION = False
 seed_constant = 30
 
 IMAGE_EXTENSION_LIST = ["tif", "jpg", "png", "jpeg"]
