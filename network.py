@@ -5,7 +5,7 @@ from config import *
 
 def create_ConvLSTMAutoencoder():
     """
-    Spatio-Temporal Autoencoder \\
+    Spatio-Temporal Autoencoder
 
     Architecture:
     - Input: (10 x 256 x 256 x 1) 10 grayscale images that form a sequence/clip
