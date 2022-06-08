@@ -4,6 +4,9 @@ from os.path import join, isdir, isfile
 import numpy as np
 from tqdm import tqdm
 import PIL.Image
+from keras.models import load_model
+from keras.layers import LayerNormalization
+import matplotlib.pyplot as plt
 
 
 def create_UCSDPed1():
@@ -35,9 +38,6 @@ def create_UCSDPed1():
             stride_list = [5, 10, 20] if DATA_AUGMENTATION else [TEMPORAL_STRIDE]
             clips = []
             for stride in stride_list:
-
-                """for start_frame_idx in [0, int(len(all_frames) * 0.25), int(len(all_frames) * 0.5),
-                                        int(len(all_frames) * 0.75)]:"""
                 clip = np.zeros(shape=(BATCH_INPUT_LENGTH, IMAGE_SIZE, IMAGE_SIZE, 1))
                 img_idx = 0
                 for i in range(0, len(all_frames), stride):
@@ -48,6 +48,51 @@ def create_UCSDPed1():
                         img_idx = 0
             dataset.extend(clips)
     return np.asarray(dataset)
+
+
+def test_UCSDPed1(model_path: str):
+    """
+    Parameters
+    ----------
+    model_path
+        path to .h5 file
+    """
+
+    path = 'data/UCSDped1/Test'
+    model = load_model(model_path, custom_objects={'LayerNormalization': LayerNormalization})
+
+    for vid in listdir(path):
+        vid_path = join(path, vid)
+        if isdir(vid_path):
+
+            test = get_single_test_UCSDPed1(vid_path)
+            sz = test.shape[0] - BATCH_INPUT_LENGTH
+            sequences = np.zeros((sz, BATCH_INPUT_LENGTH, 256, 256, 1))
+
+            for i in tqdm(range(0, sz), desc="Creating clips"):
+                clip = np.zeros((BATCH_INPUT_LENGTH, 256, 256, 1))
+                for j in range(0, BATCH_INPUT_LENGTH):
+                    clip[j] = test[i + j, :, :, :]
+                    # reconstructed_sequence = model.predict(sequences, batch_size=1, verbose=1)
+                sequences[i] = clip
+
+            # get the reconstruction cost of all the sequences
+            reconstructed_sequences = model.predict(sequences, batch_size=BATCH_SIZE, verbose=1)
+            sequences_reconstruction_cost = np.array(
+                [np.linalg.norm(np.subtract(sequences[i], reconstructed_sequences[i])) for i in range(0, sz)])
+
+            # abnormality score
+            sa = (sequences_reconstruction_cost - np.min(sequences_reconstruction_cost)) / np.max(
+                sequences_reconstruction_cost)
+
+            # regularity score
+            sr = 1.0 - sa
+
+            # plot the regularity scores
+            plt.plot(sr)
+            plt.ylabel('Regularity Score')
+            plt.xlabel('Frame')
+            plt.show()
 
 
 def get_single_test_UCSDPed1(path: str):
