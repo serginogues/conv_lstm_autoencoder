@@ -58,7 +58,7 @@ def test_UCSDPed1(model_path: str):
         path to .h5 file
     """
 
-    path = 'C:/Users/azken/Documents/Datasets/Anomaly Detection/UCSDped1/Test'
+    path = 'data/UCSDped1/Test'
     model = load_model(model_path, custom_objects={'LayerNormalization': LayerNormalization})
 
     for vid in listdir(path):
@@ -118,4 +118,16 @@ def get_single_test_UCSDPed1(path: str):
     return test
 
 
-test_UCSDPed1('backup/UCSDPed_0.0016_1958209_15_10_64.hdf5')
+def visualize_single_clip_UCSDPed1(path:str, idxs: list = [0, 45, 90, 150]):
+    frame_path_list = [join(path, name) for name in listdir(path) if
+                       isfile(join(path, name)) and name.split(".")[-1] in IMAGE_EXTENSION_LIST]
+    test = []
+    for img_path in frame_path_list:
+        img = PIL.Image.open(img_path)
+        test.append(img)
+    import cv2
+    numpy_horizontal = np.hstack((test[idxs[0]], test[idxs[1]], test[idxs[2]], test[idxs[3]]))
+
+    cv2.putText(numpy_horizontal, str(path.split('/')[-1]) + ", frames " + str(idxs), (20, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (256, 256, 256), 1)
+    cv2.imshow(path, numpy_horizontal)
+    cv2.waitKey(0)

@@ -18,8 +18,8 @@ def evaluate_clip(clip: list, model):
     model
         backup/model.hdf5
     """
-    sequences = np.zeros((1, BATCH_INPUT_SHAPE, 256, 256, 1))
-    for i in range(BATCH_INPUT_SHAPE):
+    sequences = np.zeros((1, BATCH_INPUT_LENGTH, IMAGE_SIZE, IMAGE_SIZE, 1))
+    for i in range(BATCH_INPUT_LENGTH):
         gray_img = cv2.cvtColor(clip[i], cv2.COLOR_BGR2GRAY)
         gray_img = cv2.resize(gray_img, (256, 256)) / 256.0
         gray_img = np.reshape(gray_img, (256, 256, 1))
@@ -30,7 +30,7 @@ def evaluate_clip(clip: list, model):
     return sequences_reconstruction_cost
 
 
-def run_video(path: str):
+def run_video(path: str, stride: int = 2):
     """
     Evaluate video
     """
@@ -70,10 +70,10 @@ def run_video(path: str):
 
         # Writing FrameRate on video
         cv2.putText(frame, "# frame: " + str(counter), (50, 70), cv2.FONT_ITALIC, 1, (0, 255, 0), 2)
-        if counter % 2 == 0:
+        if counter % stride == 0:
             # convert back to BGR
             clip.append(frame)
-            if len(clip) == BATCH_INPUT_SHAPE:
+            if len(clip) == BATCH_INPUT_LENGTH:
                 cost = evaluate_clip(clip, model)
                 cost_history.append(cost)
                 current_cost = cost
